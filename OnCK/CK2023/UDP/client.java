@@ -19,7 +19,7 @@ public class client {
         try {
             socket = new DatagramSocket();
 
-            int n = 14;
+            int n = 3019;
             int t = countCoPrimes(n);
 
             while(true){
@@ -35,6 +35,11 @@ public class client {
 
                 String rs = new String(packet_receive.getData(), 0, packet_receive.getLength()).trim();
                 int m = Integer.parseInt(rs);
+
+                if(m == -1){
+                    System.out.println("Server has finished because max try find M!");
+                    break;
+                }
 
                 System.out.println("Client received: " + rs);
 

@@ -66,6 +66,15 @@ class serverHandle extends Thread {
 
                 int currentValue = m.getAndIncrement();
                 
+                if(currentValue > 12){
+                    byte[] buffer = String.valueOf(-1).getBytes();
+                    DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
+
+                    socket.send(sendPacket);
+                    
+                    return;
+                }
+
                 byte[] buffer = String.valueOf(currentValue).getBytes();
                 DatagramPacket sendPacket = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
                 
