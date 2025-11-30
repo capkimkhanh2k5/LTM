@@ -1,4 +1,4 @@
-package OnCK.CK2021;
+package OnCK.CK2021.TCP;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;

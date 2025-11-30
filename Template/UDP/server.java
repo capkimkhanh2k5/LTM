@@ -46,15 +46,16 @@ class serverHandle extends Thread {
 
     @Override
     public void run() {
-        String input = new String(packet.getData(), 0, packet.getLength()).trim();
-
-        System.out.println("Server received: " + input);
-
-        String rs = "," + "," + ",";
-        byte[] buffer = rs.getBytes();
-
-        packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
         try {
+            String input = new String(packet.getData(), 0, packet.getLength()).trim();
+
+            System.out.println("Server received: " + input);
+
+            String rs = "," + "," + ",";
+            byte[] buffer = rs.getBytes();
+
+            packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
+            
             socket.send(packet);
         } catch (Exception e) {
             System.out.println("Error in send DatagramPacket!");

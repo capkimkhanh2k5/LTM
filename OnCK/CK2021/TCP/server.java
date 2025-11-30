@@ -1,4 +1,4 @@
-package OnCK.CK2021;
+package OnCK.CK2021.TCP;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
