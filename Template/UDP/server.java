@@ -15,6 +15,8 @@ public class server {
             System.out.println("Server is running in port 5000...");
             DatagramSocket socket = new DatagramSocket(5000);
 
+            ExecutorService executorService = Executors.newCachedThreadPool();
+
             while (true) {
                 byte[] buffer = new byte[1024];
 
@@ -22,7 +24,7 @@ public class server {
                 socket.receive(packet);
 
                 serverHandle handle = new serverHandle(socket, packet);
-                ExecutorService executorService = Executors.newCachedThreadPool();
+                
                 executorService.execute(handle);
             }
 

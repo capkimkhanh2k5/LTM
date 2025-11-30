@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.ArrayList;
 
 public class client {
     private static final long serialVersionUID = 1L;
@@ -17,28 +18,81 @@ public class client {
     public client() {
         try {
             socket = new DatagramSocket();
-        } catch (Exception e) {
+
+            int n = 14;
+            int t = countCoPrimes(n);
+
+            while(true){
+                //Gửi n
+                DatagramPacket packet = new DatagramPacket(new String(String.valueOf(n)).getBytes(), (String.valueOf(n)).length(), InetAddress.getLocalHost(), 5000);
+                socket.send(packet);
+
+                byte[] buffer_receive = new byte[1024];
+
+                //Nhận m
+                DatagramPacket packet_receive = new DatagramPacket(buffer_receive, buffer_receive.length);
+                socket.receive(packet_receive);
+
+                String rs = new String(packet_receive.getData(), 0, packet_receive.getLength()).trim();
+                int m = Integer.parseInt(rs);
+
+                System.out.println("Client received: " + rs);
+
+                if(checkValid(m, n, t)){
+                    System.out.println("Index " + m + " is valid!");
+
+                    String done = String.valueOf(1);
+                    DatagramPacket packet_done = new DatagramPacket(done.getBytes(), done.length(), packet_receive.getAddress(), packet_receive.getPort());
+                    socket.send(packet_done);
+
+                    break;
+                }
+                else{
+                    System.out.println("Index " + m + " is not valid!");
+                }
+            }
+        }catch(Exception e){
             System.out.println("Error in create DatagramSocket!");
             e.printStackTrace();
         }
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        String x = "";
-        try {
-            DatagramPacket tt = new DatagramPacket(x.getBytes(), x.length(), InetAddress.getLocalHost(), 5000);
-            socket.send(tt);
+    // Kiểm tra m hợp lệ
+    private boolean checkValid(int m, int n, int t) {
+        ArrayList<Integer> arr = new ArrayList<>();
 
-            byte[] buffer_receive = new byte[1024];
-            DatagramPacket packet_receive = new DatagramPacket(buffer_receive, buffer_receive.length);
-            socket.receive(packet_receive);
+        for (int i = 1; i <= t; i++) {
+            int tmp = (int) Math.pow(m, i);
+            int remainder = tmp % n;
 
-            String rs = new String(packet_receive.getData(), 0, packet_receive.getLength()).trim();
-
-        } catch (IOException e1) {
-            System.out.println("Error in send DatagramPacket!");
-            e1.printStackTrace();
+            // Kiểm tra xem remainder đã tồn tại trong mảng chưa
+            if (arr.contains(remainder)) {
+                return false;
+            }
+            arr.add(remainder);
         }
+
+        return true;
+    }
+
+    // Tìm số SNT cùng nhau với n
+    public int countCoPrimes(int n) {
+        int result = n;
+
+        for (int i = 2; i * i <= n; i++) {
+            if (n % i == 0) {
+                result -= result / i;
+
+                while (n % i == 0) {
+                    n /= i;
+                }
+            }
+        }
+
+        if (n > 1) {
+            result -= result / n;
+        }
+
+        return result;
     }
 }
