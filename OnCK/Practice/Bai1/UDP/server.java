@@ -1,4 +1,4 @@
-package OnCK.Practice.UDP1;
+package OnCK.Practice.Bai1.UDP;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;

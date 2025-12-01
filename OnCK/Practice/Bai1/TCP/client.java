@@ -1,4 +1,4 @@
-package Template.TCP;
+package OnCK.Practice.Bai1.TCP;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -39,4 +39,5 @@ public class client implements Runnable{
             }
         }
     }
+
 }

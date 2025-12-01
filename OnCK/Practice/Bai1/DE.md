@@ -1,4 +1,4 @@
-# BÀI TẬP THỰC HÀNH - UDP SOCKET
+# BÀI TẬP THỰC HÀNH
 
 ## Đề bài: Tính số ngày giữa hai ngày
 

@@ -1,19 +1,11 @@
 package Template.UDP;
 
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JTextField;
-
-public class client extends JFrame implements ActionListener {
+public class client {
     private static final long serialVersionUID = 1L;
 
     private DatagramSocket socket;
@@ -23,10 +15,6 @@ public class client extends JFrame implements ActionListener {
     }
 
     public client() {
-        setTitle("Client");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 600);
-        setLocationRelativeTo(null);
 
         try {
             socket = new DatagramSocket();
@@ -34,12 +22,10 @@ public class client extends JFrame implements ActionListener {
             System.out.println("Error in create DatagramSocket!");
             e.printStackTrace();
         }
-
-        setVisible(true);
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
+    //Test
+    public void actionPerformed() {
         String x = "";
         try {
             DatagramPacket tt = new DatagramPacket(x.getBytes(), x.length(), InetAddress.getLocalHost(), 5000);
