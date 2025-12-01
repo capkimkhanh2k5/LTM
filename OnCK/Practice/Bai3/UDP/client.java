@@ -16,26 +16,21 @@ public class client {
         try {
             socket = new DatagramSocket();
 
-            // TODO: Gửi số nguyên tố p đến server
-            String message = "23";
+            String message = "14";
+
+            // Gửi dữ liệu đến server
             byte[] sendBuffer = message.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(
-                    sendBuffer,
-                    sendBuffer.length,
-                    InetAddress.getLocalHost(),
-                    port);
+            DatagramPacket sendPacket = new DatagramPacket(sendBuffer, sendBuffer.length, InetAddress.getLocalHost(), port);
             socket.send(sendPacket);
             System.out.println("Client sent: " + message);
 
-            // TODO: Nhận kết quả từ server
-            byte[] receiveBuffer = new byte[2048];
+            //Nhận dữ liệu từ server
+            byte[] receiveBuffer = new byte[1024];
             DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
             socket.receive(receivePacket);
 
             String response = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
             System.out.println("Client received: " + response);
-
-            // TODO: Hiển thị kết quả (parse response)
 
             // Đóng socket
             socket.close();
