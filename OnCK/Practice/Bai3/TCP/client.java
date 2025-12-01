@@ -5,7 +5,7 @@ import java.io.DataOutputStream;
 import java.net.Socket;
 
 public class client implements Runnable {
-    private Socket socket;
+    private Socket soc;
 
     public static void main(String[] args) {
         new client();
@@ -13,10 +13,10 @@ public class client implements Runnable {
 
     public client() {
         try {
-            socket = new Socket("localhost", 7001);
-            System.out.println("Client connected to server: " + socket.getInetAddress() + ":" + socket.getPort());
+            soc = new Socket("localhost", 5001);
+            System.out.println("Client connected: " + soc.getInetAddress() + ":" + soc.getPort());
         } catch (Exception e) {
-            System.out.println("Error connecting to server!");
+            System.out.println("Error in connection!");
             e.printStackTrace();
             return;
         }
@@ -28,25 +28,23 @@ public class client implements Runnable {
     @Override
     public void run() {
         try {
-            DataInputStream dis = new DataInputStream(socket.getInputStream());
-            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+            DataInputStream dis = new DataInputStream(soc.getInputStream());
+            DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
 
-            // TODO: Gửi số nguyên tố p đến server
-            String message = "23";
-            dos.writeUTF(message);
+            // Gửi dữ liệu đến server
+            int n = 98;
+            dos.writeInt(n);
             dos.flush();
-            System.out.println("Client sent: " + message);
+            System.out.println("Client sent: " + n);
 
-            // TODO: Nhận kết quả từ server
+            // Nhận dữ liệu từ server
             String response = dis.readUTF();
             System.out.println("Client received: " + response);
-
-            // TODO: Hiển thị kết quả (parse response)
 
             // Đóng kết nối
             dis.close();
             dos.close();
-            socket.close();
+            soc.close();
         } catch (Exception e) {
             System.out.println("Error in communication!");
             e.printStackTrace();

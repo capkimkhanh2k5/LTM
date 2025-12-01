@@ -31,7 +31,7 @@ Cho số nguyên `n ≥ 1`, số `g` (với gcd(g, n) = 1) được gọi là **
    - Kiểm tra n = 2·p^k
 3. Nếu hợp lệ, tìm primitive roots:
    - Tính φ(n)
-   - Với mỗi g từ 1 đến n-1 (gcd(g,n)=1):
+   - Với mỗi g từ 1 đến n-1 (gcd(g,n)=1) -> là các số nguyên tố cùng nhau:
      - Kiểm tra order(g) = φ(n)
    - Trả về primitive root nhỏ nhất và danh sách tối đa 5 primitive roots
 4. Trả về kết quả theo format
