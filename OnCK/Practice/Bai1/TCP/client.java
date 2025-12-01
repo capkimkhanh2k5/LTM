@@ -13,10 +13,11 @@ public class client implements Runnable{
         new client();
     }
 
-    public client(){
+    public client(){    
 
         try {
 			soc = new Socket("localhost", 5001);
+            System.out.println("Client connected: " + soc.getInetAddress().getHostAddress() + ":" + soc.getPort());
 		} catch (Exception e) {
 			System.out.println("Error in connection!");
 		}
@@ -28,15 +29,28 @@ public class client implements Runnable{
 
     @Override
     public void run() {
-        while(true){
-            try {
-                DataInputStream dis = new DataInputStream(soc.getInputStream());
-                DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
+        try {
+            DataInputStream dis = new DataInputStream(soc.getInputStream());
+            DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
 
-                System.out.println("Client receive: ");
-            } catch (Exception e) {
-                System.out.println("Error in connection!");
+            String dates = "1/1/2025|10/10/2025";
+            
+            dos.writeUTF(dates);
+            dos.flush();
+
+            int rs = dis.readInt();
+            
+            if(rs == -1){   
+                System.out.println("Format Dates is Invalid!");
+            } else {
+                System.out.println("Numbers of Dates is: " + rs);
             }
+
+            dis.close();
+            dos.close();
+            soc.close();
+        } catch (Exception e) {
+            System.out.println("Error in connection!");
         }
     }
 
