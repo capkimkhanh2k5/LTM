@@ -14,32 +14,38 @@ public class client {
 
     public client() {
         try {
-            socket = new DatagramSocket();
+            while (true) {
+                socket = new DatagramSocket();
 
-            // TODO: Gửi dữ liệu đến server
-            String message = "Hello Server";
-            byte[] sendBuffer = message.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(
-                    sendBuffer,
-                    sendBuffer.length,
-                    InetAddress.getLocalHost(),
-                    port);
-            socket.send(sendPacket);
-            System.out.println("Client sent: " + message);
+                // TODO: Gửi dữ liệu đến server
+                String message = "Hello Server";
+                byte[] sendBuffer = message.getBytes();
+                DatagramPacket sendPacket = new DatagramPacket(
+                        sendBuffer,
+                        sendBuffer.length,
+                        InetAddress.getLocalHost(),
+                        port);
+                socket.send(sendPacket);
+                System.out.println("Client sent: " + message);
 
-            // TODO: Nhận dữ liệu từ server
-            byte[] receiveBuffer = new byte[1024];
-            DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
-            socket.receive(receivePacket);
+                // TODO: Nhận dữ liệu từ server
+                byte[] receiveBuffer = new byte[1024];
+                DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
+                socket.receive(receivePacket);
 
-            String response = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
-            System.out.println("Client received: " + response);
-
-            // Đóng socket
-            socket.close();
+                String response = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
+                System.out.println("Client received: " + response);
+            }
         } catch (Exception e) {
             System.out.println("Error in client!");
             e.printStackTrace();
+        } finally {
+            try {
+                socket.close();
+            } catch (Exception e) {
+                System.out.println("Error in client!");
+                e.printStackTrace();
+            }
         }
     }
 }

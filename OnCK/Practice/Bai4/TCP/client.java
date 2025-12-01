@@ -33,25 +33,28 @@ public class client implements Runnable {
             DataInputStream dis = new DataInputStream(soc.getInputStream());
             DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
 
-            while(true)
-            {
+            while (true) {
                 Scanner sc = new Scanner(System.in);
                 System.out.println("Header: CALC, FACTOR, PRIME, HISTORY, EXIT");
 
-                //Gửi dữ liệu đến server
+                // Gửi dữ liệu đến server
                 String input = sc.nextLine();
                 dos.writeUTF(input);
                 dos.flush();
                 System.out.println("Client sent: " + input);
 
-                //Nhận dữ liệu từ server
+                // Nhận dữ liệu từ server
                 String response = dis.readUTF();
                 System.out.println("Client received: " + response);
+
+                if (response.startsWith("EXIT")) {
+                    break;
+                }
             }
-        }catch (Exception e) {
-            System.out.println("Error in communication! " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error connect Server! " + e.getMessage());
             e.printStackTrace();
-        } finally{
+        } finally {
             try {
                 soc.close();
             } catch (IOException e) {
