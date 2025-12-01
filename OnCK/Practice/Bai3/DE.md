@@ -2,130 +2,168 @@
 
 ## Đề bài:
 
-Viết chương trình Client-Server (TCP và UDP) để tìm **primitive root** (căn nguyên thủy) của một số nguyên tố.
+Viết chương trình Client-Server (TCP và UDP) để tìm **primitive root** (căn nguyên thủy) của một số nguyên dương `n`.
 
 ### Khái niệm:
 
-Cho số nguyên tố `p`, số `g` được gọi là **primitive root modulo p** nếu:
-- `g^1 mod p, g^2 mod p, ..., g^(p-1) mod p` tạo ra **tất cả** các số từ 1 đến p-1 (không trùng lặp)
-- Hay nói cách khác: tập hợp `{g^i mod p | i = 1..p-1}` chứa đúng (p-1) phần tử khác nhau
+Cho số nguyên `n ≥ 1`, số `g` (với gcd(g, n) = 1) được gọi là **primitive root modulo n** nếu:
+- Order của g modulo n bằng φ(n)
+- Tức là: `g^φ(n) ≡ 1 (mod n)` và không tồn tại số mũ nhỏ hơn φ(n) thỏa mãn
 
-### Yêu cầu:
+**Điều kiện tồn tại:** Primitive root modulo n **chỉ tồn tại** khi n thuộc một trong các dạng sau:
+- n = 1, 2, 4
+- n = p^k (lũy thừa của số nguyên tố lẻ p, với k ≥ 1)
+- n = 2·p^k (với p là số nguyên tố lẻ, k ≥ 1)
 
-**Client:**
-1. Gửi số nguyên tố `p` đến Server
-2. Nhận kết quả từ Server:
-   - Primitive root nhỏ nhất `g`
-   - Danh sách 5 primitive roots đầu tiên (nếu có)
-3. Hiển thị kết quả
+---
 
-**Server:**
-1. Nhận số `p` từ Client
-2. Kiểm tra `p` có phải số nguyên tố không
-3. Tính φ(p) = p - 1 (Euler's totient function)
-4. Tìm **tất cả** primitive roots của `p`:
-   - Với mỗi `g` từ 2 đến p-1:
-     - Tính `g^1 mod p, g^2 mod p, ..., g^(p-1) mod p`
-     - Kiểm tra xem có đủ (p-1) phần tử khác nhau không
-5. Trả về kết quả:
-   - Nếu `p` không phải SNT: `"ERROR:NOT_PRIME"`
-   - Nếu không tìm thấy: `"ERROR:NOT_FOUND"`
-   - Nếu tìm thấy: `"g_min|g1,g2,g3,g4,g5"`
+## Yêu cầu:
 
-**Server phải xử lý đa luồng.**
+### Client:
+1. Gửi số nguyên dương `n` đến Server
+2. Nhận và hiển thị kết quả từ Server
+
+### Server:
+1. Nhận số `n` từ Client
+2. **Kiểm tra n có thuộc các dạng có primitive root không**:
+   - Kiểm tra n = 1, 2, hoặc 4
+   - Kiểm tra n = p^k (lũy thừa của SNT lẻ)
+   - Kiểm tra n = 2·p^k
+3. Nếu hợp lệ, tìm primitive roots:
+   - Tính φ(n)
+   - Với mỗi g từ 1 đến n-1 (gcd(g,n)=1):
+     - Kiểm tra order(g) = φ(n)
+   - Trả về primitive root nhỏ nhất và danh sách tối đa 5 primitive roots
+4. Trả về kết quả theo format
 
 ### Format gửi/nhận:
 
-**Client → Server:** 
+**Request (Client → Server):**
 ```
-"<số_nguyên>"
-Ví dụ: "7"
-```
-
-**Server → Client:**
-```
-Success: "<g_nhỏ_nhất>|<g1>,<g2>,<g3>,<g4>,<g5>"
-Error: "ERROR:NOT_PRIME" hoặc "ERROR:NOT_FOUND"
+n
 ```
 
-### Ví dụ:
-
-**Test case 1: p = 7**
+**Response (Server → Client):**
 ```
-Client gửi: "7"
-Server trả về: "3|3,5"
-Giải thích:
-- φ(7) = 6
-- g = 3: 3^1=3, 3^2=2, 3^3=6, 3^4=4, 3^5=5, 3^6=1 (mod 7) → 6 phần tử khác nhau ✓
-- g = 5: 5^1=5, 5^2=4, 5^3=6, 5^4=2, 5^5=3, 5^6=1 (mod 7) → 6 phần tử khác nhau ✓
-- Primitive roots của 7: [3, 5]
+Success: "g_min|g1,g2,g3,g4,g5"
+Error:   "ERROR:NOT_VALID" (n không thuộc dạng có primitive root)
+         "ERROR:NOT_FOUND" (tìm không ra - lý thuyết không xảy ra nếu n hợp lệ)
 ```
 
-**Test case 2: p = 11**
+**Server phải xử lý đa luồng.**
+
+---
+
+## Ví dụ minh họa:
+
+### ✅ Case 1: n = 7 (Số nguyên tố lẻ - dạng p^1)
+
+**Request:**
 ```
-Client gửi: "11"
-Server trả về: "2|2,6,7,8"
-Giải thích:
-- φ(11) = 10
-- Primitive roots của 11: [2, 6, 7, 8]
-- Nhỏ nhất: 2
+7
 ```
 
-**Test case 3: p = 23**
+**Phân tích:**
+1. Kiểm tra dạng: 7 là SNT lẻ → n = p^1 ✓ (hợp lệ)
+2. Tính φ(7) = 6
+3. Tìm primitive roots:
+   - Kiểm tra g = 1: 1^i ≡ 1 → order(1) = 1 ≠ 6 ✗
+   - Kiểm tra g = 2: 
+     - 2^1=2, 2^2=4, 2^3=1 (mod 7) → order(2) = 3 ≠ 6 ✗
+   - Kiểm tra g = 3:
+     - 3^1=3, 3^2=2, 3^3=6, 3^4=4, 3^5=5, 3^6=1 (mod 7)
+     - Tạo ra {3,2,6,4,5,1} = 6 phần tử → order(3) = 6 ✓
+   - Kiểm tra g = 4:
+     - 4^1=4, 4^2=2, 4^3=1 (mod 7) → order(4) = 3 ✗
+   - Kiểm tra g = 5:
+     - 5^1=5, 5^2=4, 5^3=6, 5^4=2, 5^5=3, 5^6=1 (mod 7)
+     - Tạo ra 6 phần tử → order(5) = 6 ✓
+   - Kiểm tra g = 6:
+     - 6^1=6, 6^2=1 (mod 7) → order(6) = 2 ✗
+
+**Kết quả:** Primitive roots của 7 là {3, 5}
+
+**Response:**
 ```
-Client gửi: "23"
-Server trả về: "5|5,7,10,11,14"
-Primitive roots của 23: [5, 7, 10, 11, 14, 15, 17, 19, 20, 21]
+3|3,5
 ```
 
-**Test case 4: p = 12 (không phải SNT)**
-```
-Client gửi: "12"
-Server trả về: "ERROR:NOT_PRIME"
-```
+---
 
-### Gợi ý thực hiện:
+### ✅ Case 2: n = 9 (= 3²)
 
-1. **Kiểm tra số nguyên tố:**
-```java
-boolean isPrime(int n) {
-    if (n < 2) return false;
-    for (int i = 2; i * i <= n; i++) {
-        if (n % i == 0) return false;
-    }
-    return true;
-}
+**Request:**
+```
+9
 ```
 
-2. **Kiểm tra primitive root:**
-```java
-boolean isPrimitiveRoot(int g, int p) {
-    Set<Integer> set = new HashSet<>();
-    for (int i = 1; i < p; i++) {
-        int value = modPow(g, i, p);
-        set.add(value);
-    }
-    return set.size() == p - 1;
-}
+**Phân tích:**
+1. Kiểm tra: 9 = 3² (lũy thừa của SNT lẻ) ✓
+2. φ(9) = 9·(1 - 1/3) = 6
+3. Tìm primitive roots: {2, 5}
+
+**Response:**
+```
+2|2,5
 ```
 
-3. **Tính lũy thừa modulo:**
-```java
-int modPow(int base, int exp, int mod) {
-    int result = 1;
-    base = base % mod;
-    while (exp > 0) {
-        if (exp % 2 == 1) {
-            result = (result * base) % mod;
-        }
-        exp = exp >> 1;
-        base = (base * base) % mod;
-    }
-    return result;
-}
+---
+
+## Các trường hợp lỗi:
+
+### ❌ Case 3: n = 8 (= 2³)
+
+**Request:**
+```
+8
 ```
 
-### Cấu trúc thư mục:
+**Phân tích:**
+- 8 = 2³ không thuộc dạng có primitive root
+- (Chỉ 2^1=2 và 2^2=4 mới có)
+
+**Response:**
+```
+ERROR:NOT_VALID
+```
+
+---
+
+### ❌ Case 4: n = 12 (= 2² × 3)
+
+**Request:**
+```
+12
+```
+
+**Phân tích:**
+- 12 = 2² × 3 không thuộc dạng (1, 2, 4, p^k, 2p^k)
+
+**Response:**
+```
+ERROR:NOT_VALID
+```
+
+---
+
+### ❌ Case 5: n = 15 (= 3 × 5)
+
+**Request:**
+```
+15
+```
+
+**Phân tích:**
+- 15 = 3 × 5 (tích 2 SNT khác nhau) không thuộc các dạng
+
+**Response:**
+```
+ERROR:NOT_VALID
+```
+
+---
+
+## Cấu trúc thư mục:
 
 ```
 OnCK/Practice/Bai3/
@@ -137,18 +175,11 @@ OnCK/Practice/Bai3/
     └── server.java
 ```
 
-### Yêu cầu kỹ thuật:
+## Yêu cầu kỹ thuật:
 
 - **UDP:** Port 7000, Package: `OnCK.Practice.Bai3.UDP`
 - **TCP:** Port 7001, Package: `OnCK.Practice.Bai3.TCP`
-- Server in ra console request/response
-- Client in ra console kết quả
-
-### Thử thách thêm:
-
-1. Tối ưu thuật toán tìm primitive root (dừng sớm khi tìm đủ 5)
-2. Cache kết quả đã tính
-3. Xử lý số lớn hơn (p > 1000)
-4. Thêm thống kê: tổng số primitive roots, tỷ lệ %
+- Server in console: request received, response sent
+- Client in console: kết quả
 
 **Chúc bạn làm bài tốt!** 🧮💪
