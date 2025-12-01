@@ -1,4 +1,4 @@
-package Template.UDP;
+package OnCK.Practice.Bai3.UDP;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -12,20 +12,18 @@ public class server {
 
     public server() {
         try {
-            System.out.println("Server is running in port 5000...");
-            DatagramSocket socket = new DatagramSocket(5000);
+            System.out.println("Server is running on port 7000...");
+            DatagramSocket socket = new DatagramSocket(7000);
 
             ExecutorService executorService = Executors.newCachedThreadPool();
 
             while (true) {
-                byte[] buffer = new byte[1024];
-
+                byte[] buffer = new byte[2048];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
 
                 serverHandle handle = new serverHandle(socket, packet);
-
-                executorService.execute(handle);
+                executorService.submit(handle);
             }
 
         } catch (Exception e) {
@@ -51,7 +49,11 @@ class serverHandle extends Thread {
             String receivedData = new String(packet.getData(), 0, packet.getLength()).trim();
             System.out.println("Server received: " + receivedData);
 
-            // TODO: Xử lý dữ liệu
+            // TODO: Parse số p từ receivedData
+            // TODO: Kiểm tra p có phải số nguyên tố không
+            // TODO: Tìm primitive roots của p
+            // TODO: Build response string
+
             String response = "Response from server";
 
             // Gửi response về client

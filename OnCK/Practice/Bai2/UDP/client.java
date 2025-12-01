@@ -16,32 +16,39 @@ public class client {
         try {
             socket = new DatagramSocket();
 
-            // TODO: Tạo JSON string cho dữ liệu sinh viên
-            // Format: {"studentId":"SV001","name":"Nguyen Van A","scores":[8.5,9.0,7.5,8.0,9.5]}
-            String jsonData = buildJSON("SV001", "Nguyen Van A", new double[]{8.5, 9.0, 7.5, 8.0, 9.5});
+            student std = new student("100230192", "Cap Kim Khanh", new double[]{4,5,6,7,8,9,10,10,10,10,10});
+            String msg = std.toString();
+
+            byte[] buffer = new byte[1024];
+            buffer = msg.getBytes();
+
+            //Gửi info
+            InetAddress address = InetAddress.getLocalHost();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, port);
+            socket.send(packet);
+
+            //Nhận result
+            buffer = new byte[1024];
+            packet = new DatagramPacket(buffer, buffer.length);
+            socket.receive(packet);
+
+            String tmp = new String(packet.getData(), 0, packet.getLength());
             
-            System.out.println("Client sent: " + jsonData);
+            String[] rs = tmp.split("\\|");
+            
+            if(rs.length == 1){
+                System.out.println(rs[0]);
+                socket.close();
+                return;
+            }
 
-            // TODO: Gửi JSON data đến server
-            byte[] sendBuffer = jsonData.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(
-                sendBuffer, 
-                sendBuffer.length, 
-                InetAddress.getLocalHost(), 
-                port
-            );
-            socket.send(sendPacket);
-
-            // TODO: Nhận kết quả từ server
-            byte[] receiveBuffer = new byte[2048];
-            DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
-            socket.receive(receivePacket);
-
-            String response = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
-            System.out.println("Client received: " + response);
-
-            // TODO: Parse và hiển thị kết quả
-            displayResult(response);
+            System.out.println("ID: " + rs[0]);
+            System.out.println("Name: " + rs[1]);
+            System.out.println("Average: " + rs[2]);
+            System.out.println("Max: " + rs[3]);
+            System.out.println("Min: " + rs[4]);
+            System.out.println("Grade: " + rs[5]);
+            System.out.println("Total cores: " + rs[6]);
 
             socket.close();
         } catch (Exception e) {
@@ -50,40 +57,36 @@ public class client {
         }
     }
 
-    // Hàm hỗ trợ build JSON (không dùng thư viện)
-    private String buildJSON(String studentId, String name, double[] scores) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        sb.append("\"studentId\":\"").append(studentId).append("\",");
-        sb.append("\"name\":\"").append(name).append("\",");
-        sb.append("\"scores\":[");
-        
-        // TODO: Thêm các điểm vào mảng scores
-        for (int i = 0; i < scores.length; i++) {
-            sb.append(scores[i]);
-            if (i < scores.length - 1) {
-                sb.append(",");
-            }
-        }
-        
-        sb.append("]}");
-        return sb.toString();
+}
+
+class student {
+    private String id;
+    private String name;
+    private double[] cores;
+
+    public student(String id, String name, double[] cores) {
+        this.id = id;
+        this.name = name;
+        this.cores = cores;
     }
 
-    private void displayResult(String jsonResponse) {
-        // TODO: Parse JSON response và hiển thị kết quả
-        // Gợi ý: Sử dụng String methods như indexOf, substring để parse
-        System.out.println("\n=== KẾT QUẢ THỐNG KÊ ===");
-        
-        if (jsonResponse.contains("\"error\"")) {
-            // Xử lý lỗi
-            int errorStart = jsonResponse.indexOf("\"error\":\"") + 9;
-            int errorEnd = jsonResponse.indexOf("\"", errorStart);
-            String error = jsonResponse.substring(errorStart, errorEnd);
-            System.out.println("ERROR: " + error);
-        } else {
-            // TODO: Parse và hiển thị các trường: average, max, min, grade, totalScores
-            System.out.println("Response: " + jsonResponse);
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double[] getCores() {
+        return cores;   
+    }
+
+    public String toString() {
+        String s = this.id + "|" + this.name;
+        for (double c : this.cores) {
+            s += "|" + c;
         }
+        return s;
     }
 }

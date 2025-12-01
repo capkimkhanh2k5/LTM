@@ -1,4 +1,4 @@
-package Template.UDP;
+package OnCK.Practice.Bai3.UDP;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -6,7 +6,7 @@ import java.net.InetAddress;
 
 public class client {
     private DatagramSocket socket;
-    private int port = 5000;
+    private int port = 7000;
 
     public static void main(String[] args) {
         new client();
@@ -16,8 +16,8 @@ public class client {
         try {
             socket = new DatagramSocket();
 
-            // TODO: Gửi dữ liệu đến server
-            String message = "Hello Server";
+            // TODO: Gửi số nguyên tố p đến server
+            String message = "23";
             byte[] sendBuffer = message.getBytes();
             DatagramPacket sendPacket = new DatagramPacket(
                     sendBuffer,
@@ -27,13 +27,15 @@ public class client {
             socket.send(sendPacket);
             System.out.println("Client sent: " + message);
 
-            // TODO: Nhận dữ liệu từ server
-            byte[] receiveBuffer = new byte[1024];
+            // TODO: Nhận kết quả từ server
+            byte[] receiveBuffer = new byte[2048];
             DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
             socket.receive(receivePacket);
 
             String response = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
             System.out.println("Client received: " + response);
+
+            // TODO: Hiển thị kết quả (parse response)
 
             // Đóng socket
             socket.close();

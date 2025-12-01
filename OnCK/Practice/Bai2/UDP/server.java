@@ -2,8 +2,6 @@ package OnCK.Practice.Bai2.UDP;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -20,8 +18,9 @@ public class server {
             ExecutorService executorService = Executors.newCachedThreadPool();
 
             while (true) {
+                //Nhận info
                 byte[] buffer = new byte[2048];
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                DatagramPacket packet = new  DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
 
                 serverHandle handle = new serverHandle(socket, packet);
@@ -47,34 +46,13 @@ class serverHandle extends Thread {
     @Override
     public void run() {
         try {
-            String receivedData = new String(packet.getData(), 0, packet.getLength()).trim();
-            System.out.println("Server received: " + receivedData);
+            String msg = new String(packet.getData(), 0, packet.getLength());
+            System.out.println("Server received message: " + msg);
 
-            // TODO: Parse JSON từ client
-            StudentData student = parseJSON(receivedData);
-
-            // TODO: Validate dữ liệu
-            String validationError = validateStudent(student);
-
-            String response;
-            if (validationError != null) {
-                // Gửi error response
-                response = buildErrorResponse(validationError);
-            } else {
-                // Tính toán thống kê
-                response = calculateAndBuildResponse(student);
-            }
-
-            System.out.println("Server sent: " + response);
-
-            // Gửi response về client
-            byte[] buffer = response.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(
-                    buffer,
-                    buffer.length,
-                    packet.getAddress(),
-                    packet.getPort());
-            socket.send(sendPacket);
+            String rs = caculatorStudent(msg);
+            
+            packet = new DatagramPacket(rs.getBytes(), rs.getBytes().length, packet.getAddress(), packet.getPort());
+            socket.send(packet);
 
         } catch (Exception e) {
             System.out.println("Error in serverHandle!");
@@ -82,133 +60,84 @@ class serverHandle extends Thread {
         }
     }
 
-    // Class để lưu dữ liệu sinh viên
-    private static class StudentData {
-        String studentId;
-        String name;
-        List<Double> scores;
+    private String caculatorStudent(String msg) {
+        //Xử lý chuỗi đầu vào
+        String arr[] = msg.split("\\|");
 
-        StudentData() {
-            scores = new ArrayList<>();
+        String id = arr[0];
+        if(id.length() < 4 || id.length() > 10){
+            return "ID is Invalid!";
         }
-    }
 
-    private StudentData parseJSON(String json) {
-        StudentData student = new StudentData();
+        String name = arr[1];
+        if(name.isEmpty()){
+            return "Name is Invalid!";
+        }
 
-        try {
-            // TODO: Parse studentId
-            // Gợi ý: Tìm vị trí của "studentId":" và lấy giá trị đến dấu " tiếp theo
-            int idStart = json.indexOf("\"studentId\":\"") + 13;
-            int idEnd = json.indexOf("\"", idStart);
-            student.studentId = json.substring(idStart, idEnd);
+        double[] cores = new double[arr.length - 2];
+        try{
+            if(cores.length > 10) throw new Exception();
+            
+            for (int i = 2; i < arr.length; i++) {
+                double value = Double.parseDouble(arr[i]);
 
-            // TODO: Parse name
-            int nameStart = json.indexOf("\"name\":\"") + 8;
-            int nameEnd = json.indexOf("\"", nameStart);
-            student.name = json.substring(nameStart, nameEnd);
-
-            // TODO: Parse scores array
-            int scoresStart = json.indexOf("\"scores\":[") + 10;
-            int scoresEnd = json.indexOf("]", scoresStart);
-            String scoresStr = json.substring(scoresStart, scoresEnd);
-
-            if (!scoresStr.isEmpty()) {
-                String[] scoreTokens = scoresStr.split(",");
-                for (String token : scoreTokens) {
-                    student.scores.add(Double.parseDouble(token.trim()));
+                if (value < 0.0 || value > 10.0) { 
+                    throw new Exception();
                 }
+                
+                cores[i - 2] = value;
             }
-
-        } catch (Exception e) {
-            System.out.println("Error parsing JSON: " + e.getMessage());
+        }catch(Exception e){
+            return "Cores is Invalid!";
         }
 
-        return student;
+        String average = String.valueOf(averageCores(cores));
+        String max = String.valueOf(maxCores(cores));
+        String min = String.valueOf(minCores(cores));
+        String grade = Grade(averageCores(cores));
+        String totalCores = String.valueOf(cores.length);
+
+        return id + "|" + name + "|" + average + "|" + max + "|" + min + "|" + grade + "|" + totalCores;
     }
 
-    private String validateStudent(StudentData student) {
-        List<String> errors = new ArrayList<>();
-
-        // TODO: Validate studentId (không rỗng, độ dài 4-10)
-        if (student.studentId == null || student.studentId.isEmpty()) {
-            errors.add("studentId is empty");
-        } else if (student.studentId.length() < 4 || student.studentId.length() > 10) {
-            errors.add("studentId length must be 4-10 characters");
-        }
-
-        // TODO: Validate name (không rỗng)
-        if (student.name == null || student.name.isEmpty()) {
-            errors.add("name is empty");
-        }
-
-        // TODO: Validate scores (1-10 phần tử, mỗi điểm trong [0,10])
-        if (student.scores.isEmpty() || student.scores.size() > 10) {
-            errors.add("scores must have 1-10 elements");
-        } else {
-            for (double score : student.scores) {
-                if (score < 0 || score > 10) {
-                    errors.add("scores contain invalid values (must be 0-10)");
-                    break;
-                }
-            }
-        }
-
-        if (errors.isEmpty()) {
-            return null;
-        }
-
-        return String.join(", ", errors);
-    }
-
-    private String buildErrorResponse(String error) {
-        return "{\"error\":\"" + error + "\"}";
-    }
-
-    private String calculateAndBuildResponse(StudentData student) {
-        // TODO: Tính average, max, min
+    private double averageCores(double[] cores) {
         double sum = 0;
-        double max = student.scores.get(0);
-        double min = student.scores.get(0);
-
-        for (double score : student.scores) {
-            sum += score;
-            if (score > max)
-                max = score;
-            if (score < min)
-                min = score;
+        for (double c : cores) {
+            if(c <= 0 || c >= 10.0){
+                
+            }
+            sum += c;
         }
-
-        double average = sum / student.scores.size();
-
-        // TODO: Xác định grade
-        String grade = determineGrade(average);
-
-        // TODO: Build JSON response
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        sb.append("\"studentId\":\"").append(student.studentId).append("\",");
-        sb.append("\"name\":\"").append(student.name).append("\",");
-        sb.append("\"average\":").append(String.format("%.2f", average)).append(",");
-        sb.append("\"max\":").append(max).append(",");
-        sb.append("\"min\":").append(min).append(",");
-        sb.append("\"grade\":\"").append(grade).append("\",");
-        sb.append("\"totalScores\":").append(student.scores.size());
-        sb.append("}");
-
-        return sb.toString();
+        return sum / cores.length;
     }
 
-    private String determineGrade(double average) {
-        // TODO: Xác định xếp loại dựa vào average
+    private double maxCores(double[] cores){
+        double max = cores[0];
+        for (double c : cores) {
+            if (c > max)
+                max = c;
+        }
+        return max;
+    } 
+
+    private double minCores(double[] cores){
+        double min = cores[0];
+        for (double c : cores) {
+            if (c < min)
+                min = c;
+        }
+        return min;
+    }
+
+    private String Grade(double average) {
         if (average >= 9.0)
-            return "Xuất sắc";
+            return "Excellent";
         if (average >= 8.0)
-            return "Giỏi";
+            return "Very Good";
         if (average >= 7.0)
-            return "Khá";
+            return "Good";
         if (average >= 5.0)
-            return "Trung bình";
-        return "Yếu";
+            return "Medium";
+        return "Weak";
     }
 }
