@@ -4,7 +4,7 @@
 
 ### Yêu cầu:
 
-Viết chương trình UDP Client-Server với các chức năng sau:
+Viết chương trình UDP và TCP Client-Server với các chức năng sau:
 
 **Client:**
 1. Gửi hai ngày theo định dạng `dd/MM/yyyy` (ngày bắt đầu và ngày kết thúc) đến Server
