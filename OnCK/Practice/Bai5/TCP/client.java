@@ -39,7 +39,7 @@ public class client implements Runnable {
                     while (true) {
                         String serverMsg = dis.readUTF();
                         System.out.println("\n" + serverMsg);
-                        System.out.print("Nhap gia dau gia (hoac 'exit' de thoat): ");
+                        System.out.print("Nhap gia dau gia: ");
                     }
                 } catch (Exception e) {
                     System.out.println("\n[INFO] Ngat ket noi voi server");
@@ -54,23 +54,16 @@ public class client implements Runnable {
             System.out.println("Nhap gia dau gia cua ban (so nguyen)");
 
             while (true) {
-                System.out.print("Nhap gia dau gia (hoac 'exit' de thoat): ");
+                System.out.print("Nhap gia dau gia: ");
                 String input = scanner.nextLine().trim();
 
-                if (input.equalsIgnoreCase("exit")) {
-                    System.out.println("Thoat khoi phien dau gia...");
-                    break;
-                }
-
-                // Gửi giá đấu giá lên server
+                // Gui gia dau gia len server
                 dos.writeUTF(input);
                 dos.flush();
 
                 // Cho mot chut de nhan response
                 Thread.sleep(100);
             }
-
-            scanner.close();
         } catch (Exception e) {
             System.out.println("Error in communication!");
             e.printStackTrace();

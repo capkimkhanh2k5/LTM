@@ -24,6 +24,9 @@ public class server {
     // Danh sach clients dang ket noi (de broadcast)
     private static List<DataOutputStream> clients = new CopyOnWriteArrayList<>();
 
+    // Map luu thong tin client (DataOutputStream -> IP:Port)
+    private static java.util.Map<DataOutputStream, String> clientInfoMap = new java.util.concurrent.ConcurrentHashMap<>();
+
     // Thoi diem bat dau vong dau gia
     private static AtomicInteger roundStartTime = new AtomicInteger((int) (System.currentTimeMillis() / 1000));
 
@@ -34,8 +37,8 @@ public class server {
         try {
             // Khoi tao bo dem nguoc thoi gian 60s
             scheduler.scheduleAtFixedRate(() -> {
-                System.out.println("[TIMER] 60s cycle - New round");
-                newRound();
+                System.out.println("[TIMER] 60s cycle - End round");
+                endRound();
             }, 60, 60, TimeUnit.SECONDS);
 
             // Timer bao thoi gian con lai moi 5 giay
@@ -45,7 +48,7 @@ public class server {
 
                 if (remaining > 0 && remaining <= 60) {
                     String message = "[TIMER] Thoi gian con lai: " + remaining + "s | Gia hien tai: "
-                            + startingPrice.get() + "d | Nguoi dan dau: " + currentWinner;
+                            + startingPrice.get() + "d";
                     System.out.println(message);
                     broadcastMessage(message);
                 }
@@ -68,6 +71,56 @@ public class server {
         }
     }
 
+    // Ket thuc vong dau
+    private static void endRound() {
+        System.out.println("[SERVER] Round ended!");
+
+        // Xac dinh nguoi thang
+        if (!currentWinner.equals("Chua co")) {
+            String winMsg = "[KET THUC] Chuc mung! Ban da thang voi gia: " + startingPrice.get() + "d";
+            String loseMsg = "[KET THUC] Ban da thua! Nguoi thang: " + currentWinner + " voi gia: "
+                    + startingPrice.get() + "d";
+
+            // Gui thong bao cho tung client
+            for (int i = clients.size() - 1; i >= 0; i--) {
+                try {
+                    DataOutputStream dos = clients.get(i);
+                    String clientAddr = clientInfoMap.get(dos);
+
+                    // Kiem tra xem client nay co phai nguoi thang khong
+                    if (clientAddr != null && clientAddr.equals(currentWinner)) {
+                        dos.writeUTF(winMsg);
+                    } else {
+                        dos.writeUTF(loseMsg);
+                    }
+                    dos.flush();
+                    dos.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            // Khong co ai dau gia
+            String noWinnerMsg = "[KET THUC] Khong co ai dau gia trong vong nay!";
+            broadcastMessage(noWinnerMsg);
+
+            for (int i = clients.size() - 1; i >= 0; i--) {
+                try {
+                    clients.get(i).close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // Xoa tat ca clients
+        clients.clear();
+        clientInfoMap.clear();
+
+        // Reset cho vong moi
+        newRound();
+    }
+
     // Tao vong dau moi
     private static void newRound() {
         history.clear();
@@ -76,7 +129,6 @@ public class server {
         currentWinner = "Chua co";
 
         System.out.println("[SERVER] New round - Starting price: " + startingPrice.get());
-        broadcastMessage("[SERVER] Vong moi bat dau! Gia khoi diem: " + startingPrice.get() + "d");
     }
 
     public static int getStartingPrice() {
@@ -97,14 +149,16 @@ public class server {
     }
 
     // Them client vao danh sach
-    public static void addClient(DataOutputStream dos) {
+    public static void addClient(DataOutputStream dos, String info) {
         clients.add(dos);
-        System.out.println("[SERVER] Client added. Total clients: " + clients.size());
+        clientInfoMap.put(dos, info);
+        System.out.println("[SERVER] Client added: " + info + ". Total clients: " + clients.size());
     }
 
     // Xoa client khoi danh sach
     public static void removeClient(DataOutputStream dos) {
         clients.remove(dos);
+        clientInfoMap.remove(dos);
         System.out.println("[SERVER] Client removed. Total clients: " + clients.size());
     }
 
@@ -121,6 +175,21 @@ public class server {
     // Them vao lich su
     public static void addHistory(String entry) {
         history.add(entry);
+    }
+
+    // Lay thong tin nguoi thang
+    public static String getCurrentWinner() {
+        return currentWinner;
+    }
+
+    // Gui message cho 1 client cu the
+    public static void sendToClient(DataOutputStream dos, String message) {
+        try {
+            dos.writeUTF(message);
+            dos.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
 
@@ -140,7 +209,8 @@ class serverHandle extends Thread {
             dos = new DataOutputStream(soc.getOutputStream());
 
             // Dang ky client vao danh sach
-            server.addClient(dos);
+            String clientInfo = soc.getInetAddress().getHostAddress() + ":" + soc.getPort();
+            server.addClient(dos, clientInfo);
 
             // Gui thong bao chao mung
             dos.writeUTF("[SERVER] Chao mung den phien dau gia! Gia hien tai: " + currentPrice + "d");
@@ -169,7 +239,7 @@ class serverHandle extends Thread {
                 server.updateStartingPrice(price);
 
                 // Luu vao lich su
-                String clientInfo = soc.getInetAddress().getHostAddress() + ":" + soc.getPort();
+                clientInfo = soc.getInetAddress().getHostAddress() + ":" + soc.getPort();
                 String historyEntry = clientInfo + " - Gia: " + price + "d - " +
                         java.time.LocalDateTime.now().format(
                                 java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
