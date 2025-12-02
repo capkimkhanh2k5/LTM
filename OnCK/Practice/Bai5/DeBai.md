@@ -1,40 +1,44 @@
-# Bài 5: Hệ thống Đấu giá Trực tuyến (Online Auction System)
+# Bài 5: Đấu giá Đơn giản (Simple Auction)
 
-**Mức độ**: Khó (Hard)
-**Giao thức**: TCP
-**Kiến thức**: Socket, Multithreading, Synchronization, Shared State Management.
+**Mức độ**: Trung bình - Khó
+**Giao thức**: TCP (Khuyến nghị) hoặc UDP
+**Kiến thức**: Socket, Multithreading, Timer, Synchronization.
 
 ## Mô tả bài toán
-Xây dựng một hệ thống đấu giá trực tuyến gồm Server và nhiều Client. Server quản lý các sản phẩm đang được đấu giá. Các Client kết nối tới Server để xem sản phẩm và đặt giá (Bid).
+Xây dựng hệ thống đấu giá đơn giản cho **một phiên đấu giá** tại một thời điểm. Server sẽ mở phiên đấu giá, đếm ngược thời gian, và xác định người thắng cuộc. Sau khi phiên kết thúc, Server tự động reset để bắt đầu phiên mới.
 
 ## Yêu cầu chức năng
 
 ### 1. Server
-- **Quản lý sản phẩm**: Server lưu trữ danh sách các sản phẩm (ID, Tên, Giá khởi điểm, Giá hiện tại, Người đang giữ giá cao nhất).
-- **Đa luồng (Multithreading)**: Chấp nhận nhiều Client kết nối cùng lúc.
-- **Đồng bộ hóa (Synchronization)**: Đảm bảo khi nhiều Client cùng Bid một sản phẩm, dữ liệu giá không bị sai lệch (Race Condition).
-- **Broadcast**: Khi có một Client đặt giá thành công, Server phải thông báo giá mới cho tất cả các Client khác đang kết nối để họ biết.
+- **Quản lý phiên đấu giá**:
+    - Chỉ có **1 sản phẩm** duy nhất trong một phiên.
+    - Thiết lập **Giá sàn** (Starting Price) và **Thời gian đếm ngược** (ví dụ: 30 giây).
+- **Xử lý đấu giá (Real-time)**:
+    - Nhận mức giá đặt (Bid) từ các Client.
+    - Kiểm tra tính hợp lệ: Giá đặt > Giá hiện tại.
+    - **Broadcast**: Khi có giá mới, lập tức thông báo cho tất cả Client đang kết nối (VD: "User A vừa đặt 500").
+- **Quản lý thời gian (Timer)**:
+    - Đếm ngược thời gian thực.
+    - Có thể thông báo thời gian còn lại định kỳ (VD: mỗi 5s hoặc 10s).
+    - **Kết thúc phiên**: Khi hết giờ, Server chốt người thắng cuộc, thông báo cho tất cả Client, và bắt đầu phiên mới.
 
 ### 2. Client
-- **Đăng nhập**: Nhập tên người dùng khi bắt đầu.
-- **Menu chức năng**:
-    1. **VIEW**: Xem danh sách sản phẩm, giá hiện tại và người đang giữ giá cao nhất.
-    2. **BID <ID> <Price>**: Đặt giá cho sản phẩm.
-        - Giá đặt phải lớn hơn giá hiện tại.
-        - Nhận thông báo thành công hoặc thất bại từ Server.
-    3. **EXIT**: Ngắt kết nối.
-- **Nhận thông báo thời gian thực**: Client phải có một luồng riêng (Thread) để liên tục lắng nghe thông báo từ Server (ví dụ: "Sản phẩm X vừa có giá mới: 1000 bởi User A") ngay cả khi đang đợi nhập lệnh.
+- **Kết nối**: Nhập tên (Username) để tham gia.
+- **Giao diện**:
+    - Hiển thị thông tin phiên đấu giá hiện tại (Giá cao nhất, Người giữ giá, Thời gian còn lại).
+    - Nhập lệnh để đặt giá (VD: nhập số tiền `500` để bid).
+- **Nhận thông báo (Listener)**:
+    - Luôn lắng nghe thông báo từ Server để cập nhật giao diện ngay lập tức khi:
+        - Có người khác đặt giá cao hơn.
+        - Thời gian sắp hết.
+        - Thông báo người thắng cuộc khi hết giờ.
 
 ## Kịch bản ví dụ
-1. **User A** kết nối, xem sản phẩm 1 (Laptop, giá 10tr).
-2. **User B** kết nối, xem sản phẩm 1.
-3. **User A** BID sản phẩm 1 giá 11tr -> Server cập nhật giá, thông báo cho A "Thành công".
-4. Server gửi thông báo cho **User B** (và cả A): "Sản phẩm Laptop đã có giá mới: 11tr bởi User A".
-5. **User B** thấy thông báo, quyết định BID 12tr...
-
-## Gợi ý kỹ thuật
-- **Server**: Dùng `ServerSocket`, `ExecutorService`. Dùng `List<ClientHandler>` để quản lý danh sách các kết nối nhằm thực hiện Broadcast.
-- **Client**: Cần 2 luồng:
-    - Luồng chính: Đọc input từ bàn phím và gửi lên Server.
-    - Luồng phụ (Listener): Liên tục đọc dữ liệu từ `InputStream` của Socket để hiển thị thông báo từ Server.
-- **Dữ liệu**: Có thể dùng `ConcurrentHashMap` hoặc `synchronized` block để bảo vệ dữ liệu sản phẩm.
+1. **Server** Start: Giá sàn 100, Time 60s.
+2. **User A** vào: Thấy giá 100. Bid 120.
+3. **Server**: Broadcast "Giá mới 120 bởi User A".
+4. **User B** vào: Thấy giá 120. Bid 150.
+5. **Server**: Broadcast "Giá mới 150 bởi User B".
+6. ... (Hết giờ) ...
+7. **Server**: Broadcast "HẾT GIỜ! User B thắng với giá 150".
+8. **Server**: "Bắt đầu phiên mới...", Reset giá về 100, Time 60s.
