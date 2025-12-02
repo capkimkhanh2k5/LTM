@@ -1,44 +1,69 @@
 package OnCK.Practice.Bai5.UDP;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.Scanner;
 
 public class client {
-    private DatagramSocket socket;
-    private int port = 5000;
+    private static DatagramSocket socket;
+    private static InetAddress serverIP;
+    private static int serverPort = 5001;
 
     public static void main(String[] args) {
-        new client();
-    }
-
-    public client() {
         try {
             socket = new DatagramSocket();
+            serverIP = InetAddress.getByName("localhost");
 
-            // TODO: Gửi dữ liệu đến server
-            String message = "Hello Server";
-            byte[] sendBuffer = message.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(
-                    sendBuffer,
-                    sendBuffer.length,
-                    InetAddress.getLocalHost(),
-                    port);
-            socket.send(sendPacket);
-            System.out.println("Client sent: " + message);
+            // Gui message JOIN de server biet client nay ton tai
+            sendMessage("JOIN");
 
-            // TODO: Nhận dữ liệu từ server
-            byte[] receiveBuffer = new byte[1024];
-            DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
-            socket.receive(receivePacket);
+            // Thread lang nghe
+            Thread listenThread = new Thread(() -> {
+                try {
+                    byte[] receiveData = new byte[1024];
+                    while (true) {
+                        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                        socket.receive(receivePacket);
+                        String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
+                        System.out.println("\n" + message);
+                        System.out.print("Nhap gia dau gia: ");
+                    }
+                } catch (Exception e) {
+                    System.out.println("\n[INFO] Ngat ket noi hoac loi nhan tin");
+                }
+            });
+            listenThread.setDaemon(true);
+            listenThread.start();
 
-            String response = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
-            System.out.println("Client received: " + response);
+            // Thread chinh de nhap lieu
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("=== PHIEN DAU GIA (UDP) ===");
+            System.out.print("Nhap gia dau gia: ");
 
-            // Đóng socket
-            socket.close();
+            while (true) {
+                String input = scanner.nextLine().trim();
+                if (!input.isEmpty()) {
+                    sendMessage(input);
+                }
+            }
+
         } catch (Exception e) {
-            System.out.println("Error in client!");
+            e.printStackTrace();
+        } finally {
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+        }
+    }
+
+    private static void sendMessage(String message) {
+        try {
+            byte[] sendData = message.getBytes();
+            DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, serverIP, serverPort);
+            socket.send(sendPacket);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
