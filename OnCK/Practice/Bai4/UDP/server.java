@@ -2,7 +2,9 @@ package OnCK.Practice.Bai4.UDP;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,7 +27,10 @@ public class server {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
 
-                serverHandle handle = new serverHandle(socket, packet);
+                SocketAddress clientAddress = packet.getSocketAddress();
+                System.out.println("Client address: " + clientAddress);
+
+                serverHandle handle = new serverHandle(socket, clientAddress, packet);
 
                 executorService.execute(handle);
             }
@@ -40,38 +45,84 @@ public class server {
 class serverHandle extends Thread {
     private DatagramSocket socket;
     private DatagramPacket packet;
-    private List<String> history = new ArrayList<>();
+    private SocketAddress clientAddress;
+    private HashMap<SocketAddress, List<String>> history = new HashMap<>();
     private List<String> header = List.of("CALC", "FACTOR", "PRIME", "HISTORY", "EXIT");
 
-    public serverHandle(DatagramSocket socket, DatagramPacket packet) {
+    public serverHandle(DatagramSocket socket, SocketAddress clienAddress, DatagramPacket packet) {
         this.socket = socket;
+        this.clientAddress = clienAddress;
         this.packet = packet;
     }
 
     @Override
     public void run() {
         try {
+            byte[] buffer = new byte[1024];
+
             // Nhận dữ liệu từ client
-            String receivedData = new String(packet.getData(), 0, packet.getLength()).trim();
+            String receivedData = new String(packet.getData(), 0, packet.getLength()).toUpperCase().trim();
             System.out.println("Server received: " + receivedData);
 
-            // TODO: Xử lý dữ liệu
-            String response = "Response from server";
+            if (receivedData.equals("EXIT")) {
+                String response = "EXIT";
 
-            // Gửi response về client
-            byte[] buffer = response.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(
-                    buffer,
-                    buffer.length,
-                    packet.getAddress(),
-                    packet.getPort());
-            socket.send(sendPacket);
+                buffer = new byte[1024];
+                buffer = response.getBytes();
+
+                packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
+                socket.send(packet);
+
+                System.out.println("Client " + clientAddress.toString() + " end connect with server!");
+
+                return;
+            }
+
+            String[] tmp = receivedData.split(":", 2);
+            String header_data = tmp[0].toUpperCase().trim();
+
+            String response = new String();
+
+            if (!checkHeader(header_data)) {
+                response = "ERROR: Invalid header!";
+                buffer = new byte[1024];
+                buffer = response.getBytes();
+
+                packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
+                socket.send(packet);
+
+                System.out.println("Server sent: " + response);
+                return;
+            }
+
+            if (header_data.equals("HISTORY")) {
+                if (history.containsKey(clientAddress) && !history.get(clientAddress).isEmpty()) {
+                    response = "OK: " + String.join("\n", history.get(clientAddress));
+                } else {
+                    response = "ERROR: No history!";
+                }
+            } else {
+                response = handerData(receivedData);
+            }
+
+            buffer = new byte[1024];
+            buffer = response.getBytes();
+
+            packet = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
+            socket.send(packet);
 
             System.out.println("Server sent: " + response);
+
+            addToHistory(clientAddress, "Server: " + receivedData + "\nClient: " + response + "\n\n");
         } catch (Exception e) {
             System.out.println("Error in serverHandle!");
             e.printStackTrace();
         }
+    }
+
+    private void addToHistory(SocketAddress address, String message) {
+        // Nếu address chưa tồn tại, tạo mới ArrayList. Sau đó thêm message vào list.
+        history.computeIfAbsent(address, k -> new ArrayList<>()).add(message);
     }
 
     private String handerData(String receivedData) {
@@ -240,7 +291,6 @@ class serverHandle extends Thread {
             if (receivedData.startsWith(hd))
                 return true;
         }
-
         return false;
     }
 }
