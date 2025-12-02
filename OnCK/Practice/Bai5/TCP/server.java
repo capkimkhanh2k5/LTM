@@ -42,23 +42,25 @@ class serverHandle extends Thread {
             DataInputStream dis = new DataInputStream(soc.getInputStream());
             DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
 
-            // TODO: Nhận dữ liệu từ client
-            String receivedData = dis.readUTF();
-            System.out.println("Server received: " + receivedData);
+            while(true){
+                String receivedData = dis.readUTF();
+                System.out.println("Server received: " + receivedData);
 
-            // TODO: Xử lý dữ liệu và gửi response
-            String response = "Response from server";
-            dos.writeUTF(response);
-            dos.flush();
-            System.out.println("Server sent: " + response);
-
-            // Đóng kết nối
-            dis.close();
-            dos.close();
-            soc.close();
+                // TODO: Xử lý dữ liệu và gửi response
+                String response = "Response from server";
+                dos.writeUTF(response);
+                dos.flush();
+                System.out.println("Server sent: " + response);
+            }
         } catch (IOException e) {
             System.out.println("Error in serverHandle!");
             e.printStackTrace();
+        } finally {
+            try{
+                soc.close();
+            }catch (IOException ex){
+                ex.printStackTrace();
+            }
         }
     }
 }
