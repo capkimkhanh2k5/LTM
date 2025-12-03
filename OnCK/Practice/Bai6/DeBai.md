@@ -1,11 +1,11 @@
 # Bài 6: Chat Nhóm Đơn Giản (Simple Group Chat)
 
 **Mức độ**: Dễ - Trung bình
-**Giao thức**: TCP
+**Giao thức**: TCP - UDP
 **Kiến thức**: Socket, Multithreading, IO Streams, Collections.
 
 ## Mô tả bài toán
-Xây dựng một chương trình Chat Room cơ bản sử dụng Java Socket (TCP). Chương trình cho phép nhiều người dùng kết nối vào Server và gửi tin nhắn. Khi một người gửi tin, tất cả những người khác đang online đều nhận được (Broadcast). Server đóng vai trò trung gian và giám sát nội dung chat.
+Xây dựng một chương trình Chat Room cơ bản sử dụng Java Socket. Chương trình cho phép nhiều người dùng kết nối vào Server và gửi tin nhắn. Khi một người gửi tin, tất cả những người khác đang online đều nhận được (Broadcast). Server đóng vai trò trung gian và giám sát nội dung chat.
 
 ## Yêu cầu chức năng
 

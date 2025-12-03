@@ -1,5 +1,6 @@
 package Template.UDP;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -35,8 +36,6 @@ public class client {
             String response = new String(receivePacket.getData(), 0, receivePacket.getLength()).trim();
             System.out.println("Client received: " + response);
 
-            // Đóng socket
-            socket.close();
         } catch (Exception e) {
             System.out.println("Error in client!");
             e.printStackTrace();

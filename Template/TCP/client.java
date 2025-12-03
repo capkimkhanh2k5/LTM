@@ -2,6 +2,7 @@ package Template.TCP;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 
 public class client implements Runnable {
@@ -44,10 +45,16 @@ public class client implements Runnable {
             // Đóng kết nối
             dis.close();
             dos.close();
-            soc.close();
         } catch (Exception e) {
             System.out.println("Error in communication!");
             e.printStackTrace();
+        } finally {
+            try {
+                soc.close();
+            } catch (IOException ex) {
+                System.out.println("Error in closing socket!");
+                ex.printStackTrace();
+            }
         }
     }
 }

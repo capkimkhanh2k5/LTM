@@ -1,14 +1,18 @@
 package OnCK.Practice.Bai6.TCP;
 
+import java.util.List;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class server {
+    private static List<String> chatHistory = new ArrayList<>();
+    
     public static void main(String[] args) {
         try {
             ServerSocket serverSocket = new ServerSocket(5001);
@@ -26,6 +30,14 @@ public class server {
             System.out.println("Error in server!");
             e.printStackTrace();
         }
+    }
+
+    public List<String> getList(){
+        return chatHistory;
+    }
+
+    public void addList(String str){
+        chatHistory.add(str);
     }
 }
 
@@ -59,6 +71,13 @@ class serverHandle extends Thread {
         } catch (IOException e) {
             System.out.println("Error in serverHandle!");
             e.printStackTrace();
+        } finally {
+            try{
+                soc.close();
+            }catch(IOException e){
+                System.out.println("Error in closing socket!");
+                e.printStackTrace();
+            }
         }
     }
 }

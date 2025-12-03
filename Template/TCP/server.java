@@ -55,10 +55,16 @@ class serverHandle extends Thread {
             // Đóng kết nối
             dis.close();
             dos.close();
-            soc.close();
         } catch (IOException e) {
             System.out.println("Error in serverHandle!");
             e.printStackTrace();
+        } finally {
+            try {
+                soc.close();
+            } catch (IOException ex) {
+                System.out.println("Error in closing socket!");
+                ex.printStackTrace();
+            }
         }
     }
 }
