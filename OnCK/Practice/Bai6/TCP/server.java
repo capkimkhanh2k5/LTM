@@ -1,18 +1,22 @@
 package OnCK.Practice.Bai6.TCP;
 
 import java.util.List;
+import java.util.Vector;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class server {
     private static List<String> chatHistory = new ArrayList<>();
-    
+    public static Vector<serverHandle> clientHandler = new Vector<>();
+
     public static void main(String[] args) {
         try {
             ServerSocket serverSocket = new ServerSocket(5001);
@@ -24,6 +28,9 @@ public class server {
                 System.out.println("Client connected: " + soc.getInetAddress().getHostAddress() + ":" + soc.getPort());
 
                 serverHandle handle = new serverHandle(soc);
+
+                clientHandler.add(handle);
+
                 executorService.execute(handle);
             }
         } catch (Exception e) {
@@ -32,11 +39,11 @@ public class server {
         }
     }
 
-    public List<String> getList(){
+    public static List<String> getList() {
         return chatHistory;
     }
 
-    public void addList(String str){
+    public static void addList(String str) {
         chatHistory.add(str);
     }
 }
@@ -54,29 +61,49 @@ class serverHandle extends Thread {
             DataInputStream dis = new DataInputStream(soc.getInputStream());
             DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
 
-            // TODO: Nhận dữ liệu từ client
-            String receivedData = dis.readUTF();
-            System.out.println("Server received: " + receivedData);
+            // Gửi toàn bộ lịch sử chat cũ
+            List<String> history = server.getList();
 
-            // TODO: Xử lý dữ liệu và gửi response
-            String response = "Response from server";
-            dos.writeUTF(response);
-            dos.flush();
-            System.out.println("Server sent: " + response);
+            dos.writeInt(history.size());
+            if (history.size() != 0) {
+                for (String str : history) {
+                    dos.writeUTF(str);
+                }
+            }
 
-            // Đóng kết nối
-            dis.close();
-            dos.close();
-            soc.close();
-        } catch (IOException e) {
+            while (true) {
+                String msg = "[" + soc.getInetAddress().getHostAddress() + "]:" + dis.readUTF();
+                System.out.println("Server received: " + msg);
+                server.addList(msg);
+
+                sendAllClient(msg);
+            }
+
+        } catch (EOFException | SocketException e) {
+            System.out.println("Client disconnected.");
+        } catch (Exception e) {
             System.out.println("Error in serverHandle!");
             e.printStackTrace();
         } finally {
-            try{
+            try {
+                server.clientHandler.remove(this);
                 soc.close();
-            }catch(IOException e){
+            } catch (IOException e) {
                 System.out.println("Error in closing socket!");
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void sendAllClient(String msg) {
+        for (serverHandle handle : server.clientHandler) {
+            try {
+                DataOutputStream dos = new DataOutputStream(handle.soc.getOutputStream());
+
+                dos.writeUTF(msg);
+                dos.flush();
+            } catch (IOException e) {
+                System.out.println("Error in sending message to client!");
             }
         }
     }

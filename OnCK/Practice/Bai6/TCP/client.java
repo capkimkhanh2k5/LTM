@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +33,7 @@ public class client extends JFrame implements Runnable {
 
     public client() {
         setTitle("Client ChatBox");
-        setSize(400,600);
+        setSize(400, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -47,6 +48,24 @@ public class client extends JFrame implements Runnable {
             lb_text = new JLabel("ID: " + soc.getInetAddress());
             txt_text = new JTextField();
             btn_text = new JButton("Send");
+            btn_text.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    try {
+                        DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
+
+                        String msg = txt_text.getText();
+                        dos.writeUTF(msg);
+                        dos.flush();
+
+                        txt_text.setText("");
+                    } catch (IOException e1) {
+                        System.out.println("Error in sending message!");
+                        e1.printStackTrace();
+                    }
+                }
+
+            });
 
             JPanel pn = new JPanel(new GridLayout(1, 3, 5, 5));
             pn.add(lb_text);
@@ -76,15 +95,22 @@ public class client extends JFrame implements Runnable {
             DataOutputStream dos = new DataOutputStream(soc.getOutputStream());
 
             List<String> chatHistory = new ArrayList<>();
-            
+
             int capacity = dis.readInt();
-            if(capacity != 0){
+            if (capacity != 0) {
                 for (int i = 0; i < capacity; i++) {
-                    chatHistory.add(dis.readUTF());
+                    String historyMsg = dis.readUTF();
+                    chatHistory.add(historyMsg);
+                    txt_area.append(historyMsg + "\n");
                 }
             }
-            
-            
+
+            while (true) {
+                String msg = dis.readUTF();
+                System.out.println("Client received: " + msg);
+                txt_area.append(msg + "\n");
+            }
+
         } catch (Exception e) {
             System.out.println("Error in communication!");
             e.printStackTrace();
