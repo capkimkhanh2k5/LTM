@@ -1,0 +1,63 @@
+    public void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                // Xử lý task nặng ở background, tách biệt hoàn toàn với request của user
+                boolean taskProcessed = processNextJob(); 
+                
+                // Nếu không có task thì ngủ (sleep) để tiết kiệm tài nguyên CPU
+                if (!taskProcessed) Thread.sleep(currentSleepMs);
+            } catch (Exception e) { e.printStackTrace(); }
+        }
+    }
+
+
+
+    @Override
+    public void run() {
+        System.out.println("🤖 " + workerId + " (CLOUD) ĐÃ KHỞI ĐỘNG...");
+
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                boolean taskProcessed = processNextJob();
+
+                // Exponential backoff: Increase sleep when idle, reset when busy
+                if (taskProcessed) {
+                    currentSleepMs = MIN_SLEEP_MS; // Reset to 2s when task found
+                } else {
+                    // Gradually increase to max 10s when no tasks
+                    currentSleepMs = Math.min(currentSleepMs + 1000, MAX_SLEEP_MS);
+                }
+
+                Thread.sleep(currentSleepMs);
+            } catch (InterruptedException e) {
+                System.out.println("⚠️ " + workerId + ": Nhận tín hiệu shutdown...");
+                Thread.currentThread().interrupt(); // Restore interrupted status
+                break; // Exit loop gracefully
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        System.out.println("🛑 " + workerId + ": Đã dừng hoạt động.");
+    }
+
+Tại sao nó Nhanh & Độ trễ thấp? (Góc độ kỹ thuật)
+Header tối giản: UDP header chỉ có kích thước 8 bytes (so với tối thiểu 20 bytes của TCP). Điều này giảm tải (overhead) cho băng thông mạng.
+
+Không bắt tay (Connectionless): Bỏ qua quá trình "bắt tay 3 bước" (3-way handshake). Gửi dữ liệu ngay lập tức mà không cần thiết lập đường truyền trước.
+
+Fire-and-Forget: Gửi xong là xong, không chờ phản hồi (ACK).
+
+2. Chi tiết về Nhược điểm (Góc độ xử lý Code)
+Khi lập trình với UDP, bạn cần chấp nhận các rủi ro sau để đổi lấy tốc độ:
+
+Mất gói tin (Packet Loss): Không có cơ chế gửi lại (retransmission) nếu gói tin bị rơi rớt trên đường đi.
+
+Sai thứ tự (Out of Order): Gửi theo thứ tự A -> B -> C, nhưng có thể đến nơi là C -> A -> B. Ứng dụng phải tự xử lý việc sắp xếp nếu cần.
+
+Không kiểm soát tắc nghẽn: UDP sẽ tiếp tục "bơm" dữ liệu ra mạng kể cả khi mạng đang bị tắc, dễ dẫn đến packet drop hàng loạt.
+
+3. Khi nào dùng UDP?
+Real-time applications: Video Streaming, VoIP (gọi thoại), Game Online (FPS, MOBA) - nơi mà tốc độ quan trọng hơn sự hoàn hảo (mất một vài frame hình không sao, nhưng lag là hỏng trải nghiệm).
+
+Dịch vụ truy vấn nhanh: DNS, DHCP.
