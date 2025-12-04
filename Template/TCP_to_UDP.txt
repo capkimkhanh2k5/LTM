@@ -1,0 +1,9 @@
+Trong giao thức TCP, ta dùng luồng (DataInputStream & DataOutputStream) để truyền tin cậy trên một "đường ống" kết nối sẵn. Trong khi đó, chuyển sang UDP, ta phải xử lý theo dạng phi kết nối, sử dụng DatagramSocket để làm cổng giao tiếp và DatagramPacket để đóng gói dữ liệu rời rạc.
+
+Khởi tạo DatagramSocket ở cả hai phía (Server gắn với port cố định, Client tạo socket ngẫu nhiên hoặc cố định) để thiết lập điểm gửi/nhận.
+
+Chuyển đổi dữ liệu (chuỗi, số) thành mảng byte (byte[]) và tạo DatagramPacket chứa mảng này kèm địa chỉ IP/Port đích để gửi đi.
+
+Tạo DatagramPacket chứa mảng byte rỗng (buffer) với kích thước định trước để làm vùng đệm hứng dữ liệu.
+
+Sử dụng phương thức DatagramSocket.send() để đẩy gói tin đi và DatagramSocket.receive() để chờ và nhận gói tin về.

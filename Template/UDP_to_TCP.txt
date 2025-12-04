@@ -1,0 +1,9 @@
+Trong giao thức UDP, chúng ta sử dụng gói dữ liệu (DatagramPacket) và socket (DatagramSocket) để gửi nhận dữ liệu rời rạc. Trong khi đó, trong giao thức TCP, chúng ta phải thiết lập một kênh liên lạc tin cậy trước (connection-oriented), sau đó sử dụng các luồng (DataInputStream & DataOutputStream) để truyền dữ liệu liên tục.
+
+Tạo ServerSocket (ở phía Server) và gọi phương thức accept() để chờ và chấp nhận kết nối từ Client.
+
+Tạo Socket (ở phía Client) với địa chỉ IP và Port của Server để yêu cầu thiết lập kết nối.
+
+Khởi tạo các luồng đọc/ghi (DataInputStream, DataOutputStream hoặc BufferedReader, PrintWriter) từ đối tượng Socket đã kết nối để định dạng dữ liệu truyền đi.
+
+Sử dụng các phương thức của luồng như read()/write() (hoặc readUTF/writeUTF) để trao đổi dữ liệu thay vì đóng gói và gửi qua send/receive.
